@@ -3,13 +3,9 @@ Cardstream iOS SDK
 
 Overview
 ---------
-iOS SDK that can be used to allow the use of the Cardstream payment gateway within an iOS applications.
+iOS SDK that can be used to allow the use of the Cardstream payment gateway within an iOS application.
 
 
 Requirements
 ------------
-To build the project, you require Crypto dependency to be included within the SDK. This may require the download and use of Carthage. Within Carthage you will need to add Crypto to the Cartfile for example;
-
-github "soffes/crypto"
-
-Once added to the Cartfile, update Carthage and load Crypto into the SDK.
+CryptoSwift must be included as a Framework dependency. We have provided CryptoSwift v0.7.2 as part of our SDK however as part of good practice we encourage you to rebuild CryptoSwift and our iOS SDK before use.

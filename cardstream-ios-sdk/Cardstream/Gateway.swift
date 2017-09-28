@@ -2,23 +2,23 @@
 //  Cardstream Payment Gateway SDK.
 //
 
-import Crypto
+import CryptoSwift
 
 ///
 /// Class to communicate with Payment Gateway.
 ///
-public class Gateway {
+open class Gateway {
 	
 	/// Transaction successful reponse code
-	public static let RC_SUCCESS = 0
+	open static let RC_SUCCESS = 0
 	
 	/// Transaction declined reponse code
-	public static let RC_DO_NOT_HONOR = 5
+	open static let RC_DO_NOT_HONOR = 5
 	
 	/// Verification successful reponse code
-	public static let RC_NO_REASON_TO_DECLINE = 85
+	open static let RC_NO_REASON_TO_DECLINE = 85
 	
-	public static let RC_3DS_AUTHENTICATION_REQUIRED = 0x1010A
+	open static let RC_3DS_AUTHENTICATION_REQUIRED = 0x1010A
 	
 	static let REMOVE_REQUEST_FIELDS = [
 		"directUrl",
@@ -34,27 +34,27 @@ public class Gateway {
 		]
 	
 	/// HTTP protocol errors
-	public enum HTTPError: ErrorType {
-		case ClientError
-		case ServerError
-		case UnknownError
+	public enum HTTPError: Error {
+		case clientError
+		case serverError
+		case unknownError
 	}
 	
 	/// Request errors
-	public enum RequestError: ErrorType {
-		case MissingAction
-		case MissingMerchantID
+	public enum RequestError: Error {
+		case missingAction
+		case missingMerchantID
 	}
 	
 	/// Response errors
-	public enum ResponseError: ErrorType {
-		case IncorrectSignature
-		case IncorrectSignature1
-		case IncorrectSignature2
-		case MissingResponseCode
+	public enum ResponseError: Error {
+		case incorrectSignature
+		case incorrectSignature1
+		case incorrectSignature2
+		case missingResponseCode
 	}
 	
-	let gatewayUrl: NSURL!
+	let gatewayUrl: URL!
 	let merchantID: String
 	let merchantSecret: String?
 	let merchantPwd: String?
@@ -68,7 +68,7 @@ public class Gateway {
 	/// - Parameter merchantPwd: Password for above Merchant Account
 	///
 	public init(_ gatewayUrl: String, _ merchantID: String, _ merchantSecret: String?, merchantPwd: String? = nil) {
-		self.gatewayUrl = NSURL(string: gatewayUrl)
+		self.gatewayUrl = URL(string: gatewayUrl)
 		self.merchantID = merchantID
 		self.merchantSecret = merchantSecret
 		self.merchantPwd = merchantPwd
@@ -101,12 +101,12 @@ public class Gateway {
 	/// - Returns: NSURLRequest ready for sending
 	/// - Throws: RequestError invalid request data
 	///
-	public func directRequest(request: [String: String], options: [String: String] = [:], inout secret: String?) throws -> NSURLRequest {
+	open func directRequest(_ request: [String: String], options: [String: String] = [:], secret: inout String?) throws -> URLRequest {
 		
-		let directUrl: NSURL
+		let directUrl: URL
 		
 		if let _directUrl = request["directUrl"] {
-			directUrl = NSURL(string: _directUrl)!
+			directUrl = URL(string: _directUrl)!
 		} else {
 			directUrl = self.gatewayUrl
 		}
@@ -119,16 +119,16 @@ public class Gateway {
 			_request["signature"] = self.sign(_request, secret: secret)
 		}
 		
-		let data = Gateway.buildQueryString(_request).dataUsingEncoding(NSUTF8StringEncoding)!
+		let data = Gateway.buildQueryString(_request).data(using: String.Encoding.utf8)!
 		
-		let httpRequest = NSMutableURLRequest(URL: directUrl)
+		let httpRequest = NSMutableURLRequest(url: directUrl)
 		
-		httpRequest.HTTPMethod = "POST"
+		httpRequest.httpMethod = "POST"
 		httpRequest.setValue("application/x-www-form-urlencoded; charset=utf-8", forHTTPHeaderField: "Content-Type")
-		httpRequest.setValue(String(data.length), forHTTPHeaderField: "Content-Length")
-		httpRequest.HTTPBody = data
+		httpRequest.setValue(String(data.count), forHTTPHeaderField: "Content-Length")
+		httpRequest.httpBody = data
 		
-		return httpRequest
+		return httpRequest as URLRequest
 		
 	}
 	
@@ -141,22 +141,22 @@ public class Gateway {
 	/// - Returns: verified response data
 	/// - Throws: HTTPError communications failure
 	///
-	public func directRequestComplete(data: NSData, response: NSURLResponse? = nil, secret: String? = nil) throws -> [String: String] {
+	open func directRequestComplete(_ data: Data, response: URLResponse? = nil, secret: String? = nil) throws -> [String: String] {
 		
-		if let httpResponse = response as? NSHTTPURLResponse {
+		if let httpResponse = response as? HTTPURLResponse {
 			switch httpResponse.statusCode {
 			case 200:
 				break
 			case 300...399:
-				throw HTTPError.ClientError
+				throw HTTPError.clientError
 			case 400...499:
-				throw HTTPError.ServerError
+				throw HTTPError.serverError
 			default:
-				throw HTTPError.UnknownError
+				throw HTTPError.unknownError
 			}
 		}
 		
-		let _data = String(data: data, encoding: NSUTF8StringEncoding)!
+		let _data = String(data: data, encoding: String.Encoding.utf8)!
 		
 		let _response = Gateway.parseQueryString(_data)
 		
@@ -200,12 +200,12 @@ public class Gateway {
 	/// - Returns: request HTML form
 	/// - Throws: RequestError invalid request data
 	///
-	public func hostedRequest(request: [String: String], options: [String: String] = [:]) throws -> String {
+	open func hostedRequest(_ request: [String: String], options: [String: String] = [:]) throws -> String {
 		
-		let hostedUrl: NSURL
+		let hostedUrl: URL
 		
-		if let _hostedUrl = request["hostedUrl"] {
-			hostedUrl = NSURL(string: _hostedUrl)!
+		if let _directUrl = request["hostedUrl"] {
+			hostedUrl = URL(string: _directUrl)!
 		} else {
 			hostedUrl = self.gatewayUrl
 		}
@@ -226,7 +226,7 @@ public class Gateway {
 		
 		form += " action=\"" + htmlencode(hostedUrl.absoluteString) + "\">\n"
 		
-		for name in Array(_request.keys).sort() {
+		for name in Array(_request.keys).sorted() {
 			form += self.fieldToHtml(name, value: _request[name]!)
 		}
 		
@@ -249,7 +249,7 @@ public class Gateway {
 		} else {
 			form += " type=\"submit\" value=\"Pay Now\">\n"
 		}
-		form += "<script>document.forms.submit();</script>\n"
+		
 		form += "</form>\n"
 		
 		return form
@@ -276,10 +276,10 @@ public class Gateway {
 	/// - Returns: request data ready for sending
 	/// - Throws: RequestError invalid request data
 	///
-	public func prepareRequest(request: [String: String], options: [String: String] = [:]) throws -> [String: String] {
+	open func prepareRequest(_ request: [String: String], options: [String: String] = [:]) throws -> [String: String] {
 		
 		guard request["action"] != nil else {
-			throw RequestError.MissingAction
+			throw RequestError.missingAction
 		}
 		
 		var _request = request
@@ -293,11 +293,11 @@ public class Gateway {
 		}
 		
 		guard _request["merchantID"] != nil else {
-			throw RequestError.MissingMerchantID
+			throw RequestError.missingMerchantID
 		}
 		
 		for name in Gateway.REMOVE_REQUEST_FIELDS {
-			_request.removeValueForKey(name)
+			_request.removeValue(forKey: name)
 		}
 		
 		return _request
@@ -319,22 +319,22 @@ public class Gateway {
 	/// - Returns: verified response data
 	/// - Throws: ResponseError invalid response data
 	///
-	public func verifyResponse(response: [String: String], secret: String? = nil) throws -> [String: String] {
+	open func verifyResponse(_ response: [String: String], secret: String? = nil) throws -> [String: String] {
 		
 		guard response["responseCode"] != nil else {
-			throw ResponseError.MissingResponseCode
+			throw ResponseError.missingResponseCode
 		}
 		
 		let secret = secret ?? self.merchantSecret
 		
 		var _response = response
-		var signature = _response.removeValueForKey("signature")
+		var signature = _response.removeValue(forKey: "signature")
 		var partial: String? = nil
 		
 		if let _signature = signature {
-			if _signature.containsString("|") {
+			if _signature.contains("|") {
 				
-				let components = _signature.componentsSeparatedByString("|")
+				let components = _signature.components(separatedBy: "|")
 				
 				signature = components[0]
 				partial = components[1]
@@ -344,17 +344,17 @@ public class Gateway {
 		
 		if secret == nil && signature != nil {
 			// Signature present when not expected (Gateway has a secret but we don't)
-			throw ResponseError.IncorrectSignature1
+			throw ResponseError.incorrectSignature1
 		}
 		
 		if secret != nil && signature == nil {
 			// Signature missing when one expected (we have a secret but the Gateway doesn't)
-			throw ResponseError.IncorrectSignature2
+			throw ResponseError.incorrectSignature2
 		}
 		
 		if secret != nil && self.sign(_response, secret: secret, partial: partial) != signature {
 			// Signature mismatch
-			throw ResponseError.IncorrectSignature
+			throw ResponseError.incorrectSignature
 		}
 		
 		return _response
@@ -380,7 +380,7 @@ public class Gateway {
 	/// - Parameter partial: partial signing
 	/// - Returns: signature
 	///
-	public func sign(data: [String: String], secret: String? = nil, partial: Any? = nil) -> String {
+	open func sign(_ data: [String: String], secret: String? = nil, partial: Any? = nil) -> String {
 		
 		let secret = secret ?? self.merchantSecret
 		
@@ -393,7 +393,7 @@ public class Gateway {
 			let arrayPartial: [String]?
 			
 			if let _stringPartial = partial as? String {
-				arrayPartial = _stringPartial.componentsSeparatedByString(",")
+				arrayPartial = _stringPartial.components(separatedBy: ",")
 			} else if let _arrayPartial = partial as? [String] {
 				arrayPartial = _arrayPartial
 			} else {
@@ -402,11 +402,11 @@ public class Gateway {
 			
 			if arrayPartial != nil {
 				for name in arrayPartial! {
-					_data.removeValueForKey(name)
+					_data.removeValue(forKey: name)
 				}
 			}
 			
-			_partial = Array(_data.keys).sort().joinWithSeparator(",")
+			_partial = Array(_data.keys).sorted().joined(separator: ",")
 			
 		} else {
 			_partial = nil
@@ -414,7 +414,7 @@ public class Gateway {
 		
 		let message = Gateway.buildQueryString(data) + secret!
 		
-		let signature = message.SHA512!
+		let signature = message.sha512()
 		
 		if let partial = _partial {
 			return signature + "|" + partial
@@ -434,7 +434,7 @@ public class Gateway {
 	/// - Parameter value: field value
 	/// - Returns: HTML containing <INPUT> tags
 	///
-	public func fieldToHtml(name: String, value: String) -> String {
+	open func fieldToHtml(_ name: String, value: String) -> String {
 		
 		if value.isEmpty {
 			return ""
@@ -447,40 +447,40 @@ public class Gateway {
 		
 	}
 	
-	class func buildQueryString(data: [String: String]) -> String {
+	class func buildQueryString(_ data: [String: String]) -> String {
 		
-		let allowedCharacters = NSCharacterSet(charactersInString: "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-._~")
+		let allowedCharacters = CharacterSet(charactersIn: "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-._~")
 		
 		var items = [String]()
 		
-		for name in Array(data.keys).sort() {
+		for name in Array(data.keys).sorted() {
 			
-			let _name = name.stringByAddingPercentEncodingWithAllowedCharacters(allowedCharacters)!
-			let _value = data[name]!.stringByAddingPercentEncodingWithAllowedCharacters(allowedCharacters)!
+			let _name = name.addingPercentEncoding(withAllowedCharacters: allowedCharacters)!
+			let _value = data[name]!.addingPercentEncoding(withAllowedCharacters: allowedCharacters)!
 			
 			items.append("\(_name)=\(_value)")
 			
 		}
 		
-		var query = items.joinWithSeparator("&")
+		var query = items.joined(separator: "&")
 		
-		if let regex = try? NSRegularExpression(pattern: "%0D%0A|%0A%0D|%0D", options: .CaseInsensitive) {
-			query = regex.stringByReplacingMatchesInString(query, options: .WithTransparentBounds, range: NSMakeRange(0, query.characters.count), withTemplate: "%0A")
+		if let regex = try? NSRegularExpression(pattern: "%0D%0A|%0A%0D|%0D", options: .caseInsensitive) {
+			query = regex.stringByReplacingMatches(in: query, options: .withTransparentBounds, range: NSMakeRange(0, query.characters.count), withTemplate: "%0A")
 		}
 		
-		return query.stringByReplacingOccurrencesOfString("%20", withString: "+")
+		return query.replacingOccurrences(of: "%20", with: "+")
 		
 	}
 	
-	class func parseQueryString(query: String) -> [String: String] {
+	class func parseQueryString(_ query: String) -> [String: String] {
 		
 		var data = [String: String]()
 		
-		for pair in query.componentsSeparatedByString("&") {
+		for pair in query.components(separatedBy: "&") {
 			
-			let item = pair.componentsSeparatedByString("=")
-			let name = item[0].stringByRemovingPercentEncoding!
-			let value = item[1].stringByReplacingOccurrencesOfString("+", withString: " ").stringByRemovingPercentEncoding
+			let item = pair.components(separatedBy: "=")
+			let name = item[0].removingPercentEncoding!
+			let value = item[1].replacingOccurrences(of: "+", with: " ").removingPercentEncoding
 			
 			data[name] = value
 			
@@ -492,14 +492,14 @@ public class Gateway {
 	
 }
 
-func htmlencode(str: String) -> String {
+func htmlencode(_ str: String) -> String {
 	
 	// based on http://stackoverflow.com/a/1673173
 	
-	return str.stringByReplacingOccurrencesOfString("&", withString: "&amp;")
-		.stringByReplacingOccurrencesOfString("\"", withString: "&quot;")
-		.stringByReplacingOccurrencesOfString("'", withString: "&#39;")
-		.stringByReplacingOccurrencesOfString("<", withString: "&lt;")
-		.stringByReplacingOccurrencesOfString(">", withString: "&gt;")
+	return str.replacingOccurrences(of: "&", with: "&amp;")
+		.replacingOccurrences(of: "\"", with: "&quot;")
+		.replacingOccurrences(of: "'", with: "&#39;")
+		.replacingOccurrences(of: "<", with: "&lt;")
+		.replacingOccurrences(of: ">", with: "&gt;")
 	
 }
