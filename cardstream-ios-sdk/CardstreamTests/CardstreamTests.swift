@@ -16,7 +16,7 @@ class CardstreamTests: XCTestCase {
             
             let request = [
                 "action": "SALE",
-                "amount": "1000",
+                "amount": "125",
                 "cardCVV": "356",
                 "cardExpiryMonth": "12",
                 "cardExpiryYear": "15",
@@ -80,7 +80,7 @@ class CardstreamTests: XCTestCase {
         
         do {
             
-            let request = [
+            var request = [
                 "action": "SALE",
                 "amount": "2691",
                 "cardExpiryDate": "1213",
@@ -95,22 +95,17 @@ class CardstreamTests: XCTestCase {
             
             let html = try self.cardstreamHosted.hostedRequest(request, options: ["submitText": "Confirm & Pay"])
             
-            let signature = self.cardstreamHosted.sign(request, secret: "Circle4Take40Idea", partial: true)
+            let signature = self.cardstreamHosted.sign(request, secret: self.cardstreamHosted.merchantSecret, partial: true)
+            request["signature"] = signature
             
-            XCTAssertEqual(html, "<form method=\"post\"  action=\"https://gateway.cardstream.com/hosted/\">\n"
-                + "<input type=\"hidden\" name=\"action\" value=\"SALE\" />\n"
-                + "<input type=\"hidden\" name=\"amount\" value=\"2691\" />\n"
-                + "<input type=\"hidden\" name=\"cardExpiryDate\" value=\"1213\" />\n"
-                + "<input type=\"hidden\" name=\"cardNumber\" value=\"4929 4212 3460 0821\" />\n"
-                + "<input type=\"hidden\" name=\"countryCode\" value=\"826\" />\n"
-                + "<input type=\"hidden\" name=\"currencyCode\" value=\"826\" />\n"
-                + "<input type=\"hidden\" name=\"merchantID\" value=\"100001\" />\n"
-                + "<input type=\"hidden\" name=\"orderRef\" value=\"iOS-SDK-TEST-HOSTED\" />\n"
-                + "<input type=\"hidden\" name=\"signature\" value=\"" + signature + "\" />\n"
-                + "<input type=\"hidden\" name=\"transactionUnique\" value=\"55f025addd3c2\" />\n"
-                + "<input type=\"hidden\" name=\"type\" value=\"1\" />\n"
-                + "<input  type=\"submit\" value=\"Confirm &amp; Pay\">\n"
-                + "</form>\n")
+            var assertion = "<form method=\"post\"  action=\"" + self.cardstreamHosted.gatewayUrl.absoluteString + "\">\n"
+            for item in Array(request.keys).sorted() {
+                assertion += "<input type=\"hidden\" name=\"" + item + "\" value=\"" + request[item]! + "\" />\n"
+            }
+            assertion += "<input  type=\"submit\" value=\"Confirm &amp; Pay\">\n</form>\n"
+            
+            
+            XCTAssertEqual(html, assertion)
             
         } catch {
             XCTFail("Fail")
