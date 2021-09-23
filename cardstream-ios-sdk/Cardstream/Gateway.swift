@@ -10,15 +10,15 @@ import CryptoSwift
 open class Gateway {
 	
 	/// Transaction successful reponse code
-	open static let RC_SUCCESS = 0
+    public static let RC_SUCCESS = 0
 	
 	/// Transaction declined reponse code
-	open static let RC_DO_NOT_HONOR = 5
+    public static let RC_DO_NOT_HONOR = 5
 	
 	/// Verification successful reponse code
-	open static let RC_NO_REASON_TO_DECLINE = 85
+    public static let RC_NO_REASON_TO_DECLINE = 85
 	
-	open static let RC_3DS_AUTHENTICATION_REQUIRED = 0x1010A
+    public static let RC_3DS_AUTHENTICATION_REQUIRED = 0x1010A
 	
 	static let REMOVE_REQUEST_FIELDS = [
 		"directUrl",
@@ -465,7 +465,7 @@ open class Gateway {
 		var query = items.joined(separator: "&")
 		
 		if let regex = try? NSRegularExpression(pattern: "%0D%0A|%0A%0D|%0D", options: .caseInsensitive) {
-			query = regex.stringByReplacingMatches(in: query, options: .withTransparentBounds, range: NSMakeRange(0, query.characters.count), withTemplate: "%0A")
+			query = regex.stringByReplacingMatches(in: query, options: .withTransparentBounds, range: NSMakeRange(0, query.count), withTemplate: "%0A")
 		}
 		
 		return query.replacingOccurrences(of: "%20", with: "+")
