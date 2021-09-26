@@ -10,7 +10,7 @@ spec.homepage     = "https://github.com/MarKenn/Cardstream"
 
 spec.license      = "GNU GPLv3"
 
-spec.author             = { "Mark Kenneth M. Bayona" => "mkmbayona@gmail.com" }
+spec.author       = { "Mark Kenneth M. Bayona" => "mkmbayona@gmail.com" }
 
 spec.platform     = :ios, "12.0"
 
