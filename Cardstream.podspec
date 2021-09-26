@@ -1,7 +1,7 @@
 Pod::Spec.new do |spec|
 
 spec.name         = "Cardstream"
-spec.version      = "0.0.1"
+spec.version      = "0.0.2"
 spec.summary      = "Cardstream SDK"
 
 spec.description  = "Gateway SDK for Cardstream"
@@ -22,7 +22,7 @@ spec.source_files  = "Cardstream/**/*.{swift,h}"
 spec.public_header_files = "Cardstream/**/*.h"
 # spec.public_header_files = "cardstream-ios-sdk/Classes/**/*.h"
 
-spec.dependency "CryptoSwift", "~> 0.15.0"
+spec.dependency "CryptoSwift", "~> 1.4.1"
 
 spec.swift_versions = "4.2"
 end

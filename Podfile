@@ -6,7 +6,7 @@ target 'Cardstream' do
   use_frameworks!
 
   # Pods for Cardstream
-  pod 'CryptoSwift', '~> 0.15.0'
+  pod 'CryptoSwift', '~> 1.4.1'
 
   target 'CardstreamTests' do
     # Pods for testing
