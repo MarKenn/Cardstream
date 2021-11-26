@@ -24,5 +24,5 @@ spec.public_header_files = "Cardstream/**/*.h"
 
 spec.dependency "CryptoSwift", "~> 1.4.1"
 
-spec.swift_versions = "4.2"
+spec.swift_versions = "5"
 end
